@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake Game</title>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      text-align: center;
+      font-family: Consolas, monospace;
+    }
+    canvas {
+      background-color: black;
+      display: block;
+      margin: 0 auto;
+    }
+    #score {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    #startBtn {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Snake Game</h1>
+  <div id="score">Score: 0</div>
+  <button id="startBtn">Iniciar Juego</button>
+  <canvas id="gameCanvas" width="700" height="700"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const startBtn = document.getElementById("startBtn");
+
+    const GAME_WIDTH = 700;
+    const GAME_HEIGHT = 700;
+    const SPACE_SIZE = 50;
+    const SPEED = 100;
+
+    let score = 0;
+    let direction = "Right";
+    let snake = [];
+    let food = null;
+    let gameRunning = false;
+
+    document.addEventListener("keydown", changeDirection);
+    startBtn.addEventListener("click", startGame);
+
+    function drawBoard() {
+      for (let j = 0; j < GAME_HEIGHT; j += SPACE_SIZE) {
+        for (let i = 0; i < GAME_WIDTH; i += SPACE_SIZE) {
+          let color = ((i / SPACE_SIZE + j / SPACE_SIZE) % 2 === 0) ? "green" : "#00b400";
+          ctx.fillStyle = color;
+          ctx.fillRect(i, j, SPACE_SIZE, SPACE_SIZE);
+        }
+      }
+    }
+
+    function drawSnake() {
+      ctx.fillStyle = "#838ABD";
+      for (let part of snake) {
+        ctx.fillRect(part.x, part.y, SPACE_SIZE, SPACE_SIZE);
+      }
+    }
+
+    function drawFood() {
+      ctx.fillStyle = "red";
+      ctx.beginPath();
+      ctx.arc(food.x + SPACE_SIZE / 2, food.y + SPACE_SIZE / 2, SPACE_SIZE / 2, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    function moveSnake() {
+      let head = { ...snake[0] };
+      if (direction === "Up") head.y -= SPACE_SIZE;
+      if (direction === "Down") head.y += SPACE_SIZE;
+      if (direction === "Left") head.x -= SPACE_SIZE;
+      if (direction === "Right") head.x += SPACE_SIZE;
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        score++;
+        document.getElementById("score").textContent = `Score: ${score}`;
+        food = spawnFood();
+      } else {
+        snake.pop();
+      }
+    }
+
+    function checkCollision() {
+      let head = snake[0];
+      if (head.x < 0 || head.x >= GAME_WIDTH || head.y < 0 || head.y >= GAME_HEIGHT) {
+        return true;
+      }
+      for (let i = 1; i < snake.length; i++) {
+        if (head.x === snake[i].x && head.y === snake[i].y) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function changeDirection(event) {
+      const key = event.key.toLowerCase();
+      if ((key === "w" || key === "arrowup") && direction !== "Down") direction = "Up";
+      if ((key === "s" || key === "arrowdown") && direction !== "Up") direction = "Down";
+      if ((key === "a" || key === "arrowleft") && direction !== "Right") direction = "Left";
+      if ((key === "d" || key === "arrowright") && direction !== "Left") direction = "Right";
+    }
+
+    function spawnFood() {
+      const x = Math.floor(Math.random() * (GAME_WIDTH / SPACE_SIZE)) * SPACE_SIZE;
+      const y = Math.floor(Math.random() * (GAME_HEIGHT / SPACE_SIZE)) * SPACE_SIZE;
+      return { x, y };
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+
+      if (checkCollision()) {
+        alert("GAME OVER");
+        gameRunning = false;
+        startBtn.disabled = false;
+        return;
+      }
+
+      ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+      drawBoard();
+      moveSnake();
+      drawSnake();
+      drawFood();
+      setTimeout(gameLoop, SPEED);
+    }
+
+    function startGame() {
+      score = 0;
+      direction = "Right";
+      snake = [
+        { x: SPACE_SIZE * 2, y: 0 },
+        { x: SPACE_SIZE * 1, y: 0 },
+        { x: 0, y: 0 }
+      ];
+      food = spawnFood();
+      document.getElementById("score").textContent = "Score: 0";
+      startBtn.disabled = true;
+      gameRunning = true;
+      drawBoard();
+      drawSnake();
+      drawFood();
+      setTimeout(gameLoop, SPEED);
+    }
+
+    drawBoard();
+  </script>
+</body>
+</html>
